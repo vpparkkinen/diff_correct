@@ -1,10 +1,9 @@
 # diff_correct
 
-The aim of ```diff_correct()``` is to provide an alternative to ```cna::is.submodel()``` for checking whether a candidate model returned 
-in an inverse search trial is correct with respect to the stipulated ground truth model that was used to generate the analyzed data, or more 
-generally, to check whether two non-identical models are compatible with each other in a correctness-preserving sense. The motivation for this is that 
-two models may be compatible with each other in the sense that they do not disagree about any difference-making relations that they entail 
-about factors included in both models, without being being related as sub- and supermodel. 
+The aim of ```diff_correct()``` is to provide an alternative to ```cna::is.submodel()``` for correctness checking models returned 
+by CNA, or other configurational causal modeling (CCM) method such as QCA, in an inverse search trial with known search target, or more 
+generally, to check whether two non-identical CCM models are compatible with each other in a correctness-preserving sense. The motivation for this is that 
+two CCM models may be compatible with each other in the sense that neither model entails a difference-making relation between some factors A and B such that the other model includes A and B but does not entail a difference-making relationship between them, without being being related as sub- and supermodel. 
 This is the case for example between models that differ only in the granularity at which they describe some causal relevance relations --
 i.e. some pairs of factors linked by a causal chain in one model are represented as a directly causally related in another model. In such a case
 all the difference-making relations entailed by the coarse grained model are also entailed by the fine grained model, the latter merely provides more detail.
