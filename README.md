@@ -16,3 +16,4 @@ The current implementation expects that the factors included in the candidate mo
 to pairs of models where the candidate is more coarse grained or omits detail compared the target, not to pairs of models where the candidate in addition includes
 some factors not included in the target.
 
+Work in progress, TODO: more testing, optimization for speed, support for other CCMs than CNA...
