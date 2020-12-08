@@ -262,34 +262,101 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     #bc_idx <- unlist(lapply(pair_variants, function(x) any(x[, .N, keyby = dum][,N] == 1)))
     
     
-    bc_idx <- unlist(lapply(pair_variants, function(x) any(table(x[,"dum"]) == 1)))
+    #bc_idx <- unlist(lapply(pair_variants, function(x) any(table(x[,"dum"]) == 1)))
     
-    bcases <- pair_variants[bc_idx]
-         
+    #bcases <- pair_variants[bc_idx]
+    
     
     #bc_idx <- unlist(lapply(dumconst, function(x) any(unlist(lapply(x, function(y) nrow(y)==1)))))
     #bcases <- pair_variants[bc_idx]
-    potconf <- lapply(c_idx[bc_idx], function(x)
-      names(testdat)[which(!names(testdat) %in% c(names(x), toupper(outcome), toupper(disfacs), "dum"))])
-    
-    pair_variants <- pair_variants[!bc_idx]
+    # potconf <- lapply(c_idx[bc_idx], function(x)
+    #   names(testdat)[which(!names(testdat) %in% c(names(x), toupper(outcome), toupper(disfacs), "dum"))])
+    # 
+    #pair_variants <- pair_variants[!bc_idx]
     #dumconst <- dumconst[!bc_idx]
     
     dumconst <- lapply(pair_variants, function(x) split(x, x$dum))
     
-    # ttt[,unique(.SD), by=dum, .SDcols = outcome][,.N, by=dum]
+    #check whether potential confounders vary within values of dum
+    
+    dumconf <- lapply(dumconst, function(x) lapply(x, function(y)
+      y[,-which(names(y) %in% c(names(facvals), 'dum', outcome))]))
+    
+    perf_cov <- lapply(dumconf, function(x) lapply(x, function(y)
+      lapply(y, function(z) length(unique(z)) == 1)))
+    
+    perf_cov <- lapply(perf_cov, function(x) lapply(x, function(y) unlist(y)))
+    
+    perf_cov <- lapply(perf_cov, function(x) do.call(rbind, x))
+    
+    perf_cov <- lapply(perf_cov, function(x) apply(x, 2, all))
+    
+    perf_const_pairs <- lapply(seq_along(dumconf), 
+                               function(iter) 
+                                 lapply(dumconf[[iter]], 
+                                        function(x) x[,perf_cov[[iter]]]))
+    
+    perf_const_pairs <- lapply(perf_const_pairs, function(x) lapply(x, unique))
+    
+    perf_const_pairs <- lapply(perf_const_pairs, function(x) do.call(rbind, x))
+    
+    confs_temp <- lapply(perf_const_pairs, 
+                         function(x) which(unlist(lapply(x, function(a) length(unique(a)))) > 1))
+    
+    dumpos <- lapply(lapply(dumconf, `[[`, 2), function(z) unique(z))
+    
+    confs <- lapply(seq_along(dumpos), function(it) if(length(confs_temp[[it]]) >= 1){
+      dumpos[[it]][,which(names(dumpos[[it]]) %in% names(confs_temp[[it]])), drop = FALSE]
+    } else {NULL})
+    
+    confs <- lapply(confs, function(x) unique(x))
+    
+    noconfs <- which(unlist(lapply(confs, is.null)))
+    confs <- confs[-noconfs]
+    confs <- lapply(confs, function(x) {rownames(x) <- 1; return(x)})
+    confs <- unique(confs)
+    # 
+    # lapply(seq_along(confs), 
+    #        function(it) 
+    #          if(length(confs[[it]]) == 1){names(confs[[it]]) <- names(confs_temp[[it]])} else 
+    #            {confs[[it]]})
+    
+    # for (i in seq_along(1:length(dumconst)))
+    # 
+    # 
+    # pairvars <- lapply(dumconst,
+    #                             function(x) lapply(x,
+    #                                                  function(z) apply(z, 2, var)))
+    # 
+    # pairvars <- lapply(pairvars, function(x) do.call(rbind, x))
+    # 
+    # pairvars_conf <- lapply(pairvars, function(x) apply(x[,unique(unlist(potconf))], 2, sum))
+    # 
+    # pairvars_conf <- lapply(pairvars_conf, function(x) sum(x))
+    # confounding_idx <- which(unlist(pairvars_conf) == 0)
+    # 
+    # conf_values_temp <- lapply(dumconst[confounding_idx], function(x) 
+    #                         lapply(x$`1`[,-which(names(x$`1`) %in% c(names(facvals), 'dum', outcome))], 
+    #                                function(a) length(unique(a)) == 1))
+    # 
+    # conf_values_which <- lapply(conf_values, function(x) which(unlist(x) == 1))
+    # # ttt[,unique(.SD), by=dum, .SDcols = outcome][,.N, by=dum]
     # lapply(pair_variants, function(ttt) 
     #   any(ttt[,unique(.SD), by=dum, .SDcols = outcome][
     #     ,.N, by=dum][,N] > 1))
-    
-    
+    # if (length(confounding_idx) >= 1){
+    #   dumconst <- dumconst[-confounding_idx]  
+    # }
+    # 
     #out <- any(outvar)
-    
     #lapply(pair_variants, function(x) )
     #outvar_pos <- lapply(dumconst, function(x) lapply(x[2], function(y) var(y[,outcome]) ))
-    outvar <- lapply(dumconst, function(x) lapply(x, function(y) var(y[,outcome]) ))
-    outvar <- lapply(outvar, function(x) sum(x[[1]], x[[2]]) == 0L)
-    out <- any(unlist(outvar))
+    #outvar <- lapply(dumconst[noconfs], function(x) lapply(x, function(y) var(y[,outcome]) ))
+    outvar <- lapply(dumconst[noconfs], function(y) var(y[[2]][,outcome]) )
+    #outvar <- lapply(outvar, function(x) sum(x[[1]], x[[2]]) == 0L)
+    #outvar <- lapply(outvar, function(x) sum(x[[1]], x[[2]]) == 0L)
+    #out <- any(unlist(outvar))
+    out <- any(unlist(outvar)==0L)
     #legpairs <- pair_variants[unlist(outvar)]
     
     #outvar_neg <- lapply(dumconst, function(x) lapply(x[1], function(y) var(y[,outcome]) ))
@@ -304,24 +371,51 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     
     #out <- any(outvar == 0L)
     
-    if (!out & length(potconf) >= 1){
+    if (!out & length(confs) != length(noconfs)){
+      #for (i in seq_along(confs)){
+      dislong <- sapply(seq_along(facvals), 
+                        function(x) paste0(names(facvals)[x], "=", facvals[[x]]))
       
-      potconf <- unique(unlist(potconf))
-      #lapply(potconf, function(y) !y %in% potouts$Factor)
-      potconf <- potconf[!potconf %in% potouts$Factor]
-      if (length(potconf) < 1){out <- TRUE}else{
-        testdat <- as.data.table(testdat)
-        setkeyv(testdat, toupper(disfacs))
-        flt <- testdat[as.list(facvals)]
-        ctest <- lapply(potconf, function(z) cov(flt[,..z], flt[,..outcome]) %in% c(0L, NA))
-        #ctest <- lapply(ctest, unlist)
-        #ctest <- any(unlist(lapply(ctest, all)))
-        out <- any(unlist(ctest))
-        #out <- ctest  
+      dislong <- paste0(dislong, collapse = "*")
+      dissuff <- paste0("(", dislong, "->", outcome, ")")
+      confsun <- unlist(confs)
+      confsuff <- lapply(seq_along(confsun), function(x) 
+        paste0("(", names(confsun)[x], "=", confsun[[x]], "->", outcome, ")"))
+      confsuff <- unique(confsuff)
+      cond_disXconf <- lapply(confsuff, function(x)
+        paste0(dissuff, "->", x))
+      cond_confXdis <- lapply(confsuff, function(x)
+        paste0(x, "->", dissuff))
+      disXconf_freqs <- unlist(lapply(cond_disXconf, function(x)
+        condTbl(x, testdat, force.bool=T)$freq))
+      if (all(disXconf_freqs < 1)) {out <- TRUE} else {
+        confXdis_freqs <- unlist(lapply(cond_confXdis, function(x)
+          condTbl(x, testdat, force.bool=T)$freq))
+        out <- all(disXconf_freqs <= confXdis_freqs)
       }
-      
+      #}
     }
     
+    # if (!out & length(potconf) >= 1){
+    #   
+    #   potconf <- unique(unlist(potconf))
+    #   #lapply(potconf, function(y) !y %in% potouts$Factor)
+    #   potconf <- potconf[!potconf %in% potouts$Factor]
+    #   if (length(potconf) < 1){out <- TRUE}else{
+    #     testdat <- as.data.table(testdat)
+    #     setkeyv(testdat, toupper(disfacs))
+    #     flt <- testdat[as.list(facvals)]
+    #     ctestpos <- lapply(potconf, function(z) cov(flt[,..z], flt[,..outcome]) %in% c(0L, NA))
+    #     #fltneg <- testdat[as.list(facvals_neg)]
+    #     #ctestneg <- lapply(potconf, function(z) cov(fltneg[,..z], fltneg[,..outcome]) %in% c(0L, NA))
+    #     #ctest <- lapply(ctest, unlist)
+    #     #ctest <- any(unlist(lapply(ctest, all)))
+    #     out <- any(unlist(ctest))
+    #     #out <- ctest  
+    #   }
+    #   
+    # }
+    # 
     
     
   }
