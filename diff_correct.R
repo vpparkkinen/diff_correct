@@ -189,6 +189,55 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     
     rcc <- any(unlist(lapply(ntemp, function(x) nrow(x) < 1)))
     if (rcc){return(FALSE)}
+    
+    suffs <- cna(fulldat, ordering = list(outcome), strict = T, suff.only = T)
+    suffs <- suffs$solution[which(names(suffs$solution) == outcome)][[1]][[1]]
+    suffs <- suffs$condition
+    suffsnostar <- lapply(suffs, function(x) gsub("\\*", "", x))
+    disnostar <- gsub("\\*", "", dis)
+    dissuff_idx <- which(unlist(lapply(lapply(suffsnostar, 
+                                              function(x) 
+                                                grepl(dis, x)), function(x) x == 1)))
+    
+    candsuff <- suffs[dissuff_idx]
+    ressuff <- suffs[-dissuff_idx]
+    
+    ressuff_conds <- lapply(ressuff, function(x) condition(x, fulldat))
+    
+    ressuff_vals <- lapply(ressuff_conds, function(x) x[[1]][[1]])
+    ressuff_dat <- as.data.frame(ressuff_vals)
+    names(ressuff_dat) <- resuff_facs <- LETTERS[1:length(ressuff_dat)]
+    
+    candsuff_vals <- lapply(candsuff, function(x) condition(x, fulldat)[[1]][[1]])
+    cand_names <- vector("character", length(candsuff))
+    for (i in seq_along(candsuff)){
+      cand_names[i] <- paste0("CAND", LETTERS[i]) 
+    }
+    names(candsuff_vals) <- cand_names
+    canddat <- as.data.frame(candsuff_vals)
+    suffdat <- cbind(ressuff_dat, cbind(canddat, 
+                                             OUT = fulldat[,which(names(fulldat) == outcome)]))
+    
+    disj_resuff <- paste0(resuff_facs, collapse = "+")
+    
+    tcond_disj_resuff <- paste0("(", disj_resuff, "->", "OUT)") 
+    # tcond_cand_alts <- if (length(cand_names) == 1){NULL} else {
+    #   lapply(seq_along(cand_names), function(x) cand_names[-x])
+    # }
+    # 
+    pre_alt_conds <- lapply(seq_along(cand_names), function(x)
+      paste0(disj_resuff, "+", paste0(cand_names[-x], collapse = "+")))
+    
+    alt_conds <- lapply(pre_alt_conds, function(x) paste0("(", x, "->", "OUT)"))
+    
+    cand_conds <- lapply(cand_names, function(x) paste0("(", x, "->OUT)"))
+    
+    candXaltcs <- lapply(seq_along(cand_names), function(x)
+      paste0(cand_conds[x], "->", alt_conds[x]))
+    
+    altXcandcs <- lapply(seq_along(cand_names), function(x)
+      paste0(alt_conds[x], "->",  cand_conds[x]))
+    
     rs <- lapply(ntemp, function(x) 1:nrow(x))
     rns <- expand.grid(rs)
     
@@ -279,7 +328,13 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     
     #check whether potential confounders vary within values of dum
     
-    dumconf <- lapply(dumconst, function(x) lapply(x, function(y)
+    dumconf <- lapply(tpairs, function(x) split(x, x$dum))
+    
+    # dumconf <- lapply(dumconst, function(x) lapply(x, function(y)
+    #   y[,-which(names(y) %in% c(names(facvals), 'dum', outcome))]))
+    # 
+    
+    dumconf <- lapply(dumconf, function(x) lapply(x, function(y)
       y[,-which(names(y) %in% c(names(facvals), 'dum', outcome))]))
     
     perf_cov <- lapply(dumconf, function(x) lapply(x, function(y)
@@ -312,7 +367,8 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     confs <- lapply(confs, function(x) unique(x))
     
     noconfs <- which(unlist(lapply(confs, is.null)))
-    confs <- confs[-noconfs]
+    #confs <- confs[-noconfs]
+    confs <- if (length(noconfs) == 0) confs else confs[-noconfs]
     confs <- lapply(confs, function(x) {rownames(x) <- 1; return(x)})
     confs <- unique(confs)
     # 
