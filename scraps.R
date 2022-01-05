@@ -1,0 +1,21 @@
+library(cna)
+library(igraph)
+library(Rfast)
+mod <- "(A*b+C<->D)*(D*E+G<->F)"
+asfs <- extract_asf(mod) 
+lhs <- lapply(asfs[[1]], lhs)
+rhs <- lapply(asfs[[1]], rhs)
+# literals <- lapply(lhs, function(x) strsplit(gsub("\\*|\\+", "", x), ""))
+# literals <- unlist(literals, recursive = FALSE)
+disjuncts <- lapply(lhs, function(x) strsplit(x, "\\+"))
+#disjuncts <- lapply(lhs, function(x) strsplit(gsub("\\*", "", x), "\\+"))
+disjuncts <- unlist(disjuncts, recursive = FALSE)
+rhsreps <- mapply(function(x, y) rep(x, length(y)), rhs, disjuncts, SIMPLIFY = FALSE)
+edgelist <- data.frame(disj=unlist(disjuncts), out=unlist(rhsreps))
+edgelist <- graph.edgelist(as.matrix(edgelist))
+adj_matrix <- as.matrix(get.adjacency(edgelist))
+adj_matrix[adj_matrix == 0] <- NA
+
+paths <- floyd(adj_matrix)
+colnames(paths) <- colnames(adj_matrix)
+rownames(paths) <- rownames(adj_matrix)
