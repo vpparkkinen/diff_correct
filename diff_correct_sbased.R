@@ -20,28 +20,32 @@ diff_correct <- function(m1, m2){
   
  
   
-  cand_is_directcause <- vector("logical", length(cand_disjuncts))
-  names(cand_is_directcause) <- cand_disjuncts
-  for (i in seq_along(cand_disjuncts)){
-    #cand_is_directcause[[i]] <- cand_disjuncts[i] %in% target_lhss_disjuncts[[outcome_asf_idx]]
-    isd <- lapply(target_lhss_disjuncts[[outcome_asf_idx]], function(x) grepl(cand_disjuncts[i], x))
-    cand_is_directcause[i] <- any(unlist(isd))
-  }
-  if (all(cand_is_directcause)){return(TRUE)}
-  
-  
-  if (any(cand_is_directcause)){
-    test_disjuncts <- cand_disjuncts[!cand_is_directcause]
-  } else {
-    test_disjuncts <- cand_disjuncts
-  }
-  
+  # cand_is_directcause <- vector("logical", length(cand_disjuncts))
+  # names(cand_is_directcause) <- cand_disjuncts
+  # for (i in seq_along(cand_disjuncts)){
+  #   #cand_is_directcause[[i]] <- cand_disjuncts[i] %in% target_lhss_disjuncts[[outcome_asf_idx]]
+  #   isd <- lapply(target_lhss_disjuncts[[outcome_asf_idx]], function(x) grepl(cand_disjuncts[i], x))
+  #   #isd <- grepl(cand_disjuncts[i], target_lhss_disjuncts[[outcome_asf_idx]])
+  #   #isd <- lapply(target_lhss_disjuncts[[outcome_asf_idx]], function(x) match(x, cand_disjuncts[i]))
+  #   cand_is_directcause[i] <- any(unlist(isd))
+  #   #cand_is_directcause[[i]] <- which(unlist(isd))
+  # }
+  # if (all(cand_is_directcause)){return(TRUE)}
+  # 
+  # 
+  # if (any(cand_is_directcause)){
+  #   test_disjuncts <- cand_disjuncts[!cand_is_directcause]
+  # } else {
+  #   test_disjuncts <- cand_disjuncts
+  # }
+
   # disjunct_check <- vector("logical", length(test_disjuncts))
   # names(disjunct_check) <- test_disjuncts
-  # 
+
+  test_disjuncts <- cand_disjuncts
   disjunct_check <- vector("logical", length(cand_disjuncts))
   names(disjunct_check) <- cand_disjuncts
-  disjunct_check <- cand_is_directcause
+  #disjunct_check <- cand_is_directcause
   
   
   #test_factors <- all.vars(cna:::tryparse(cand_lhs))[]
@@ -50,7 +54,7 @@ diff_correct <- function(m1, m2){
   # test_facs_check <- vector("logical", length(test_factors))
   # names(test_facs_check) <- test_factors
   
-  
+  #<--------------THIS LOGIC MAKES NO SENSE
   chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
   
   #which(previous_out_in_disjunct)
@@ -64,7 +68,7 @@ diff_correct <- function(m1, m2){
   if(!outcome %in% on_path_outcomes){return(FALSE)}
   
   on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
-  
+  #---------THIS LOGIC MAKES NO SENSE--------->
   #test_factors <- unlist(lapply(lapply(test_disjuncts, cna:::tryparse), all.vars))
   
   #test_facs_check <- vector("logical", length(test_factors))
