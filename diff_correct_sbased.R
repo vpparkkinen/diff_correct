@@ -55,20 +55,33 @@ diff_correct <- function(m1, m2){
   # names(test_facs_check) <- test_factors
   
   #<--------------THIS LOGIC MAKES NO SENSE
-  chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
+  if(length(target_rhss) == 1){
+    if(!outcome == target_rhss[outcome_asf_idx]){
+      return(FALSE)
+    } else{
+      on_path_asfs_idx <- outcome_asf_idx
+      on_path_outcomes <- target_rhss[on_path_asfs_idx]
+      on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
+    }
+  } else {
+    chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
   
-  #which(previous_out_in_disjunct)
+    #which(previous_out_in_disjunct)
   
-  #on_path_asfs_idx <- previous_out_in_disjunct[[which(lapply(previous_out_in_disjunct, sum) > 0)]]
-  midpath_asfs_idx <- which(lapply(chain_asfs, sum) > 0)
-  other_path_asfs_idx <- lapply(chain_asfs, function(y) y[y>0])
-  
-  on_path_asfs_idx <- sort(unique(c(midpath_asfs_idx, unlist(other_path_asfs_idx))))
-  on_path_outcomes <- target_rhss[on_path_asfs_idx]
-  if(!outcome %in% on_path_outcomes){return(FALSE)}
-  
-  on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
+    #on_path_asfs_idx <- previous_out_in_disjunct[[which(lapply(previous_out_in_disjunct, sum) > 0)]]
+    midpath_asfs_idx <- which(lapply(chain_asfs, sum) > 0)
+    other_path_asfs_idx <- lapply(chain_asfs, function(y) y[y>0])
+    
+    on_path_asfs_idx <- sort(unique(c(midpath_asfs_idx, unlist(other_path_asfs_idx))))
+    on_path_outcomes <- target_rhss[on_path_asfs_idx]
+    if(!outcome %in% on_path_outcomes){return(FALSE)}
+    
+    on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
   #---------THIS LOGIC MAKES NO SENSE--------->
+  }
+  
+  
+  
   #test_factors <- unlist(lapply(lapply(test_disjuncts, cna:::tryparse), all.vars))
   
   #test_facs_check <- vector("logical", length(test_factors))
@@ -284,41 +297,41 @@ case_flipper <- function(x){
 m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
 m2 <- "b*H*e + c*G*d <-> A"
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
 m2 <- "A*H  <-> F"
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
 m2 <- "b  <-> F"
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
   
 m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
 m2 <- "E  <-> F"
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
 m2 <- "E*H  <-> G"
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A*G+X<->H)"
 m2 <- "T*A <->H"
 
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 
 m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A+X<->H)"
 m2 <- "C*T + B + X<->E"
 
 diff_correct(m1,m2)
-correct2b(m2,m1)
+correct3(m2,m1)
 
 
 m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A+X<->H)"
@@ -326,5 +339,5 @@ m2 <- "C*T * A<->E"
 
 diff_correct(m1,m2)
 
-correct2b(m2,m1)
+correct3(m2,m1)
 
