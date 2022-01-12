@@ -180,11 +180,14 @@ diff_correct <- function(m1, m2){
             #ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", sup_candidate_cofac_temp, paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp))
             ctrl_exp_cofacs_supp <- if(ce_temp_cofacs == "!()"){sup_candidate_cofac_temp}else{paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp)}
           } else {
-            ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
+            #ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
+             ctrl_exp_cofacs_present <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
+             ctrl_exp_cofacs_supp <- NULL
           }
           
           ctrl_exp_cofacs_present <- gsub("\\*$", "", ctrl_exp_cofacs_present)
-          ctrl_exp_cofacs_supp <- gsub("\\*$", "", ctrl_exp_cofacs_supp)
+          ctrl_exp_cofacs_supp <- if(is.null(sup_candidate_cofac_temp)){NULL} else {
+            gsub("\\*$", "", ctrl_exp_cofacs_supp)}
           
           # if (length(c(candidate_cofacs, on_path_cofacs) >= 1)){
           #   ctrl_exp_cofacs_present <- paste0(ce_temp_cofacs, ca_cofac_pres)
@@ -202,6 +205,7 @@ diff_correct <- function(m1, m2){
           
           ctrl_cond <- c(ctrl_exp_cofacs_present, ctrl_exp_cofacs_supp)
           ctrl_cond <- unique(ctrl_cond)
+          ctrl_cond <- ctrl_cond[sapply(ctrl_cond, function(x) length(x) > 0)]
           cond_check <- vector("logical", length(ctrl_cond))
           names(cond_check) <- ctrl_cond
           for(cond in ctrl_cond){
@@ -263,7 +267,8 @@ diff_correct <- function(m1, m2){
            
           if (length(cond_check) == 1){
             pa_check[paths_idx == pa] <- ifelse(cond_check, TRUE, FALSE)} else 
-            {pa_check[paths_idx == pa] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
+            #{pa_check[paths_idx == pa] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
+            {pa_check[paths_idx == pa] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present], TRUE, FALSE)}
           
           
           }
