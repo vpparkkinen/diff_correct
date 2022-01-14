@@ -11,6 +11,7 @@ diff_correct <- function(m1, m2){
   target_lhss_disjuncts <- unlist(lapply(target_lhss, strsplit, "\\+"), recursive = FALSE)
   target_lhss_ex <- lapply(target_lhss, cna:::tryparse)
   target_lhss_facs <- lapply(target_lhss_ex, all.vars)
+  #tar_lhs_facs_per_disj <- lapply()
   outcome_asf_idx <- which(target_rhss == outcome)
   
   #cand_lhs <- all.vars(cna:::tryparse(cna:::lhs(candidate)))
@@ -65,12 +66,33 @@ diff_correct <- function(m1, m2){
     }
   } else {
     chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
-  
-    #which(previous_out_in_disjunct)
+    #chain_asfs <- lapply(target_lhss_disjuncts, function(x) pmatch(x, target_rhss, nomatch = 0L))
+    # chain_asfs <- lapply(target_lhss_disjuncts, 
+    #                      function(x) sapply(target_rhss, 
+    #                                         function(e) pmatch(x, e, nomatch = 0L)))
+    # #which(previous_out_in_disjunct)
   
     #on_path_asfs_idx <- previous_out_in_disjunct[[which(lapply(previous_out_in_disjunct, sum) > 0)]]
     midpath_asfs_idx <- which(lapply(chain_asfs, sum) > 0)
     other_path_asfs_idx <- lapply(chain_asfs, function(y) y[y>0])
+    
+    n_paths <- length(other_path_asfs_idx[[outcome_asf_idx]])
+    all_paths <- vector("list", length(chain_asfs))
+    for(n in 1:n_paths){
+      for(c in rev(seq_along(chain_asfs))){
+        all_paths[[c]] <- pathfind(chain_asfs[1:c], c())
+      }
+    }
+    
+    pathfind <- function(x, path){
+      if((length(x) == 1) | sum(x[[length(x)]]) == 0L){
+        return(unique(path))
+      } else {
+        path <- c(path, length(x), x[[length((x))]])
+        pathfind(x[-length(x)], path)
+      }
+    }
+    
     
     on_path_asfs_idx <- sort(unique(c(midpath_asfs_idx, unlist(other_path_asfs_idx))))
     on_path_outcomes <- target_rhss[on_path_asfs_idx]
