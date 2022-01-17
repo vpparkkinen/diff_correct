@@ -1,4 +1,5 @@
 library(cna)
+library(igraph)
 
 diff_correct <- function(m1, m2){
   fulldat <- ct2df(selectCases(m1))
@@ -55,52 +56,79 @@ diff_correct <- function(m1, m2){
   # test_facs_check <- vector("logical", length(test_factors))
   # names(test_facs_check) <- test_factors
   
-  #<--------------THIS LOGIC MAKES NO SENSE
-  if(length(target_rhss) == 1){
-    if(!outcome == target_rhss[outcome_asf_idx]){
-      return(FALSE)
-    } else{
-      on_path_asfs_idx <- outcome_asf_idx
-      on_path_outcomes <- target_rhss[on_path_asfs_idx]
-      on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
-    }
-  } else {
-    chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
-    #chain_asfs <- lapply(target_lhss_disjuncts, function(x) pmatch(x, target_rhss, nomatch = 0L))
-    # chain_asfs <- lapply(target_lhss_disjuncts, 
-    #                      function(x) sapply(target_rhss, 
-    #                                         function(e) pmatch(x, e, nomatch = 0L)))
-    # #which(previous_out_in_disjunct)
+  # #<--------------THIS LOGIC MAKES NO SENSE
+  # if(length(target_rhss) == 1){
+  #   if(!outcome == target_rhss[outcome_asf_idx]){
+  #     return(FALSE)
+  #   } else{
+  #     on_path_asfs_idx <- outcome_asf_idx
+  #     on_path_outcomes <- target_rhss[on_path_asfs_idx]
+  #     on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
+  #   }
+  # } else {
+  #   chain_asfs <- lapply(target_lhss_facs, function(x) match(x, target_rhss, nomatch = 0L))
+  #   #chain_asfs <- lapply(target_lhss_disjuncts, function(x) pmatch(x, target_rhss, nomatch = 0L))
+  #   # chain_asfs <- lapply(target_lhss_disjuncts, 
+  #   #                      function(x) sapply(target_rhss, 
+  #   #                                         function(e) pmatch(x, e, nomatch = 0L)))
+  #   # #which(previous_out_in_disjunct)
+  # 
+  #   #on_path_asfs_idx <- previous_out_in_disjunct[[which(lapply(previous_out_in_disjunct, sum) > 0)]]
+  #   midpath_asfs_idx <- which(lapply(chain_asfs, sum) > 0)
+  #   other_path_asfs_idx <- lapply(chain_asfs, function(y) y[y>0])
+  #   
+  #   n_paths <- length(other_path_asfs_idx[[outcome_asf_idx]])
+  #   all_paths <- vector("list", length(chain_asfs))
+  #   for(n in 1:n_paths){
+  #     for(c in rev(seq_along(chain_asfs))){
+  #       all_paths[[c]] <- pathfind(chain_asfs[1:c], c())
+  #     }
+  #   }
+  #   
+  #   pathfind <- function(x, path){
+  #     if((length(x) == 1) | sum(x[[length(x)]]) == 0L){
+  #       return(unique(path))
+  #     } else {
+  #       path <- c(path, length(x), x[[length((x))]])
+  #       pathfind(x[-length(x)], path)
+  #     }
+  #   }
+  #   
+  #   
+  #   on_path_asfs_idx <- sort(unique(c(midpath_asfs_idx, unlist(other_path_asfs_idx))))
+  #   on_path_outcomes <- target_rhss[on_path_asfs_idx]
+  #   if(!outcome %in% on_path_outcomes){return(FALSE)}
+  #   
+  #   on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
+  # #---------THIS LOGIC MAKES NO SENSE--------->
+  #}
   
-    #on_path_asfs_idx <- previous_out_in_disjunct[[which(lapply(previous_out_in_disjunct, sum) > 0)]]
-    midpath_asfs_idx <- which(lapply(chain_asfs, sum) > 0)
-    other_path_asfs_idx <- lapply(chain_asfs, function(y) y[y>0])
-    
-    n_paths <- length(other_path_asfs_idx[[outcome_asf_idx]])
-    all_paths <- vector("list", length(chain_asfs))
-    for(n in 1:n_paths){
-      for(c in rev(seq_along(chain_asfs))){
-        all_paths[[c]] <- pathfind(chain_asfs[1:c], c())
-      }
-    }
-    
-    pathfind <- function(x, path){
-      if((length(x) == 1) | sum(x[[length(x)]]) == 0L){
-        return(unique(path))
-      } else {
-        path <- c(path, length(x), x[[length((x))]])
-        pathfind(x[-length(x)], path)
-      }
-    }
-    
-    
-    on_path_asfs_idx <- sort(unique(c(midpath_asfs_idx, unlist(other_path_asfs_idx))))
-    on_path_outcomes <- target_rhss[on_path_asfs_idx]
-    if(!outcome %in% on_path_outcomes){return(FALSE)}
-    
-    on_path_asfs_facs <- target_lhss_facs[on_path_asfs_idx]
-  #---------THIS LOGIC MAKES NO SENSE--------->
+  rhsreps <- vector("list", length(target_rhss))
+  for (i in seq_along(target_rhss)){
+    rhsreps[[i]] <- mapply(function(x, y) rep(x, length(y)), 
+                           target_rhss[i], 
+                           target_lhss_facs[[i]], 
+                           SIMPLIFY = FALSE)  
   }
+  
+  
+  
+  edgelist <- data.frame(disj=unlist(target_lhss_facs), out=unlist(rhsreps))
+  graph <- graph.edgelist(as.matrix(edgelist))
+  
+  cand_facs <- unlist(strsplit(cand_disjuncts, "\\*"))
+  cand_fac_paths <- vector("list", length(cand_facs))
+  for(fac in seq_along(cand_facs)){
+    temppaths <- all_simple_paths(graph, from = cand_facs[fac], to = outcome)
+    cand_fac_paths[[fac]] <- lapply(temppaths, function(x) as.character(names(x)))
+    if(length(cand_fac_paths[[fac]]) == 0L) {cand_fac_paths[[fac]] <- NA}
+    
+  }
+  names(cand_fac_paths) <- cand_facs
+  
+  # first factor in cand_fac_paths is the lhs factor, must be excluded when determining
+  # asf connections
+  viable_paths <- lapply(cand_fac_paths, function(x) lapply(x, function(y) which(target_rhss %in% y[-1])))
   
   
   
@@ -120,14 +148,15 @@ diff_correct <- function(m1, m2){
     dis_facs_check <- vector("logical", length(dis_facs))
     names(dis_facs_check) <- dis_facs
     for (id in dis_facs){
-      if (!id %in% unlist(on_path_asfs_facs)) {
+      if (!id %in% unlist(cand_fac_paths)) {
         #dis_facs_check[names(dis_facs_check) == id] <- FALSE
         pa_check <- FALSE
       } else {
         
         #closest_path_asf_idx <- max(which(unlist(lapply(target_lhss_facs, function(x) id %in% x))))
-        paths_idx <- which(unlist(lapply(target_lhss_facs[1:outcome_asf_idx], function(x) id %in% x)))
-  
+        #paths_idx <- which(unlist(lapply(target_lhss_facs[1:outcome_asf_idx], function(x) id %in% x)))
+        paths_idx <- viable_paths[names(viable_paths) == id]
+        paths_idx <- unlist(paths_idx, recursive = FALSE)
         pa_check <- vector("logical", length(paths_idx))
         for (pa in paths_idx){
           #extract co-factors for candidate factor and its effects on path to outcome
@@ -136,7 +165,7 @@ diff_correct <- function(m1, m2){
           
           #test_fac_cofacs <- cofac_extract(id, unlist(target_lhss_disjuncts[pa:outcome_asf_idx]))  
           
-          test_fac_cofacs <- lapply(unlist(target_lhss_disjuncts[pa:outcome_asf_idx]),
+          test_fac_cofacs <- lapply(unlist(target_lhss_disjuncts[pa]),
                                     function(x) cofac_extract(id, x))
           test_fac_cofacs <- unlist(test_fac_cofacs[!unlist(lapply(test_fac_cofacs, is.null))])
           
@@ -144,10 +173,12 @@ diff_correct <- function(m1, m2){
           
           #always_on_cofacs <- paste0(unlist(test_fac_cofacs), collapse = "*")
           
-          path_outs <- on_path_outcomes[pa:outcome_asf_idx]
+          #path_outs <- on_path_outcomes[pa]
+          path_outs <- target_rhss[pa]
           #temp <- unlist(target_lhss_disjuncts[pa:(outcome_asf_idx - 1)])
-          temp <- unlist(target_lhss_disjuncts[pa:(outcome_asf_idx)])
-          path_outs_disjuncts <- unlist(lapply(on_path_outcomes[pa:outcome_asf_idx], function(x) temp[grepl(x, temp)]))
+          temp <- unlist(target_lhss_disjuncts[pa])
+          #path_outs_disjuncts <- unlist(lapply(on_path_outcomes[pa:outcome_asf_idx], function(x) temp[grepl(x, temp)]))
+          path_outs_disjuncts <- unlist(lapply(target_rhss[pa], function(x) temp[grepl(x, temp)]))
           on_path_cofacs <- unlist(lapply(path_outs, function(x) cofac_extract(x, path_outs_disjuncts)))
           #cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs), unlist(candidate_cofacs))
           cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs))
@@ -155,13 +186,13 @@ diff_correct <- function(m1, m2){
           #cofacs_neg <- case_flipper(cofacs) 
           
           
-          ctrl_exp_temp <- unlist(target_lhss_disjuncts[pa:outcome_asf_idx])
+          ctrl_exp_temp <- unlist(target_lhss_disjuncts[pa])
           #ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)] #this would not select disjuncts that feature the cand fac
           ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)]
           
           fac_alt_paths <- ctrl_exp_temp[grepl(id, ctrl_exp_temp)]
           
-          ctrl_exp_temp <- unique(ctrl_exp_temp[!ctrl_exp_temp %in% c(on_path_outcomes[pa:outcome_asf_idx], path_outs_disjuncts, dis, id)])
+          ctrl_exp_temp <- unique(ctrl_exp_temp[!ctrl_exp_temp %in% c(target_rhss[pa], path_outs_disjuncts, dis, id)])
           cand_other_disjs <- cand_disjuncts[!grepl(id, cand_disjuncts)]
           
           #test_fac_cofacs[!toupper(unlist(test_fac_cofacs)) %in% toupper(c(candidate_cofacs, on_path_cofacs))]
@@ -233,7 +264,7 @@ diff_correct <- function(m1, m2){
           for(cond in ctrl_cond){
           
           #dummy code background factor configurations
-            full_path <- c(id, on_path_outcomes[pa:outcome_asf_idx]) #needs to come earlier, take out on_path outcomes from ctrl_cond
+            full_path <- c(id, target_rhss[pa]) #needs to come earlier, take out on_path outcomes from ctrl_cond
             #dum_dat <- fulldat[,-which(names(fulldat) %in% full_path)]
             dum_dat <- fulldat
             pre_dum_confs <- if(cond == ""){fulldat}else{ct2df(selectCases(cond, dum_dat))}
@@ -287,11 +318,12 @@ diff_correct <- function(m1, m2){
           #   dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check, TRUE, FALSE)} else 
           #   {dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
            
+          idx <- unlist(lapply(paths_idx, function(x) identical(x, pa)))
           if (length(cond_check) == 1){
-            pa_check[paths_idx == pa] <- ifelse(cond_check, TRUE, FALSE)} else 
-            #{pa_check[paths_idx == pa] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
-            {pa_check[paths_idx == pa] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present], TRUE, FALSE)}
-          
+            pa_check[idx] <- ifelse(cond_check, TRUE, FALSE)} else {
+              pa_check[idx] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present], TRUE, FALSE)
+            }
+  
           
           }
         }
@@ -321,50 +353,5 @@ case_flipper <- function(x){
 
 
 
-m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
-m2 <- "b*H*e + c*G*d <-> A"
-diff_correct(m1,m2)
-correct3(m2,m1)
 
-m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
-m2 <- "A*H  <-> F"
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
-m2 <- "b  <-> F"
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-  
-m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
-m2 <- "E  <-> F"
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-m1 <- "(E*c+b*h*d+E*H*B<->G)*(b*H+c*E*b<->F)*(F*e+c*G*d<->A)"
-m2 <- "E*H  <-> G"
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A*G+X<->H)"
-m2 <- "T*A <->H"
-
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-
-m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A+X<->H)"
-m2 <- "C*T + B + X<->E"
-
-diff_correct(m1,m2)
-correct3(m2,m1)
-
-
-m1 <- "(A + B*X  <-> C)*(C*T + B <->E)*(E+A+X<->H)"
-m2 <- "C*T * A<->E"
-
-diff_correct(m1,m2)
-
-correct3(m2,m1)
 
