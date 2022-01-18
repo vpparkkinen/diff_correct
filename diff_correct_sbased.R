@@ -2,6 +2,8 @@ library(cna)
 library(igraph)
 
 diff_correct <- function(m1, m2){
+  if(!is.inus(m1)) stop("target model is not causally interpretable (not INUS)")
+  if(!is.inus(m2)) stop("candidate model is not causally interpretable (not INUS)")
   fulldat <- ct2df(selectCases(m1))
   outcome <- gsub(" ", "", cna:::rhs(m2))
   target <- cna:::noblanks(m1)
