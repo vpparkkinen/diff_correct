@@ -124,7 +124,7 @@ diff_correct <- function(m1, m2){
   cand_fac_paths <- vector("list", length(cand_facs))
   
   for(fac in seq_along(cand_facs)){
-    temppaths <- all_simple_paths(graph, from = cand_facs[fac], to = outcome)
+    temppaths <- all_simple_paths(graph, from = cand_facs_uc[fac], to = outcome)
     cand_fac_paths[[fac]] <- lapply(temppaths, function(x) as.character(names(x)))
     if(length(cand_fac_paths[[fac]]) == 0L) {cand_fac_paths[[fac]] <- NA}
     
@@ -262,21 +262,21 @@ diff_correct <- function(m1, m2){
                                     }
                                     )
           ##\FIX THIS
-          check_for_pairs <- check_for_pairs[which(unlist(lapply(check_for_pairs, is.null)))] <- NULL
+          check_for_pairs[unlist(lapply(check_for_pairs, is.null))] <- NULL
           ##FIX THIS
           #var(check_for_pairs[[2]]$G) > 0L
           outvarcheck <- lapply(check_for_pairs, function(x) unique(x[outcome]))
           
           check_for_pairs <- check_for_pairs[unlist(lapply(outvarcheck, function(x) nrow(x) >1))]
           
-          idx <- unlist(lapply(paths_idx, function(x) identical(x, pa))) #move this somewhere
+          idx <- which(unlist(lapply(paths_idx, function(x) identical(x, pa)))) #move this somewhere
           
           if(length(check_for_pairs) == 0L){
             pa_check[idx] <- FALSE
           } else {
-            checkcov <- lapply(check_for_pairs, function(x) cov(x[id], x[outcome]))
+            checkcov <- lapply(check_for_pairs, function(x) cov(x[toupper(id)], x[outcome]))
             checked <- lapply(checkcov, function(x) !(x %in% c(0L, NA)))
-            pa_check[idx] <- ifelse(checked, TRUE, FALSE)
+            pa_check[idx] <- ifelse(any(unlist(checked)), TRUE, FALSE)
             } 
           
           # #  if (length(cofacs) >= 1){
