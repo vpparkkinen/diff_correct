@@ -115,11 +115,14 @@ diff_correct <- function(m1, m2){
   
   
   
-  edgelist <- data.frame(disj=unlist(target_lhss_facs), out=unlist(rhsreps))
+  edgelist <- data.frame(disj = toupper(unlist(target_lhss_facs)),
+                         out = toupper(unlist(rhsreps)))
   graph <- graph.edgelist(as.matrix(edgelist))
   
   cand_facs <- unlist(strsplit(cand_disjuncts, "\\*"))
+  cand_facs_uc <- toupper(cand_facs)
   cand_fac_paths <- vector("list", length(cand_facs))
+  
   for(fac in seq_along(cand_facs)){
     temppaths <- all_simple_paths(graph, from = cand_facs[fac], to = outcome)
     cand_fac_paths[[fac]] <- lapply(temppaths, function(x) as.character(names(x)))
@@ -130,7 +133,7 @@ diff_correct <- function(m1, m2){
   
   # first factor in cand_fac_paths is the lhs factor, must be excluded when determining
   # asf connections
-  viable_paths <- lapply(cand_fac_paths, function(x) lapply(x, function(y) which(target_rhss %in% y[-1])))
+  viable_paths <- lapply(cand_fac_paths, function(x) lapply(x, function(y) which(toupper(target_rhss) %in% y[-1])))
   
   
   
@@ -150,7 +153,7 @@ diff_correct <- function(m1, m2){
     dis_facs_check <- vector("logical", length(dis_facs))
     names(dis_facs_check) <- dis_facs
     for (id in dis_facs){
-      if (!id %in% unlist(cand_fac_paths)) {
+      if (!toupper(id) %in% toupper(unlist(cand_fac_paths))) {
         #dis_facs_check[names(dis_facs_check) == id] <- FALSE
         pa_check <- FALSE
       } else {
@@ -161,49 +164,63 @@ diff_correct <- function(m1, m2){
         paths_idx <- unlist(paths_idx, recursive = FALSE)
         pa_check <- vector("logical", length(paths_idx))
         for (pa in paths_idx){
+          canvary <- c(toupper(id), toupper(target_rhss[pa]))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
+          if(is.null(candidate_cofacs)){
+            candidate_cofacs_pres <- ""
+          } else {
+            candidate_cofacs_pres <- paste0(candidate_cofacs, collapse = "*")
+          }
           #candidate_cofacs_neg <- case_flipper(candidate_cofacs)
+          
+          
           
           #test_fac_cofacs <- cofac_extract(id, unlist(target_lhss_disjuncts[pa:outcome_asf_idx]))  
           
-          test_fac_cofacs <- lapply(unlist(target_lhss_disjuncts[pa]),
-                                    function(x) cofac_extract(id, x))
-          test_fac_cofacs <- unlist(test_fac_cofacs[!unlist(lapply(test_fac_cofacs, is.null))])
-          
-          #test_fac_cofacs_supp_temp <- test_fac_cofacs
-          
-          #always_on_cofacs <- paste0(unlist(test_fac_cofacs), collapse = "*")
-          
-          #path_outs <- on_path_outcomes[pa]
-          path_outs <- target_rhss[pa]
-          #temp <- unlist(target_lhss_disjuncts[pa:(outcome_asf_idx - 1)])
-          temp <- unlist(target_lhss_disjuncts[pa])
-          #path_outs_disjuncts <- unlist(lapply(on_path_outcomes[pa:outcome_asf_idx], function(x) temp[grepl(x, temp)]))
-          path_outs_disjuncts <- unlist(lapply(target_rhss[pa], function(x) temp[grepl(x, temp)]))
-          on_path_cofacs <- unlist(lapply(path_outs, function(x) cofac_extract(x, path_outs_disjuncts)))
-          #cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs), unlist(candidate_cofacs))
-          cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs))
-          #cofacs <- c(test_fac_cofacs, on_path_cofacs)
-          #cofacs_neg <- case_flipper(cofacs) 
-          
-          
-          ctrl_exp_temp <- unlist(target_lhss_disjuncts[pa])
-          #ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)] #this would not select disjuncts that feature the cand fac
-          ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)]
-          
-          fac_alt_paths <- ctrl_exp_temp[grepl(id, ctrl_exp_temp)]
-          
-          ctrl_exp_temp <- unique(ctrl_exp_temp[!ctrl_exp_temp %in% c(target_rhss[pa], path_outs_disjuncts, dis, id)])
+          # test_fac_cofacs <- lapply(unlist(target_lhss_disjuncts[pa]),
+          #                           function(x) cofac_extract(id, x))
+          # test_fac_cofacs <- unlist(test_fac_cofacs[!unlist(lapply(test_fac_cofacs, is.null))])
+          # 
+          # #test_fac_cofacs_supp_temp <- test_fac_cofacs
+          # 
+          # #always_on_cofacs <- paste0(unlist(test_fac_cofacs), collapse = "*")
+          # 
+          # #path_outs <- on_path_outcomes[pa]
+          # path_outs <- target_rhss[pa]
+          # #temp <- unlist(target_lhss_disjuncts[pa:(outcome_asf_idx - 1)])
+          # temp <- unlist(target_lhss_disjuncts[pa])
+          # #path_outs_disjuncts <- unlist(lapply(on_path_outcomes[pa:outcome_asf_idx], function(x) temp[grepl(x, temp)]))
+          # path_outs_disjuncts <- unlist(lapply(target_rhss[pa], function(x) temp[grepl(x, temp)]))
+          # on_path_cofacs <- unlist(lapply(path_outs, function(x) cofac_extract(x, path_outs_disjuncts)))
+          # #cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs), unlist(candidate_cofacs))
+          # cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs))
+          # #cofacs <- c(test_fac_cofacs, on_path_cofacs)
+          # #cofacs_neg <- case_flipper(cofacs) 
+          # 
+          # 
+          # ctrl_exp_temp <- unlist(target_lhss_disjuncts[pa])
+          # #ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)] #this would not select disjuncts that feature the cand fac
+          # ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)]
+          # 
+          # fac_alt_paths <- ctrl_exp_temp[grepl(id, ctrl_exp_temp)]
+          # 
+          # ctrl_exp_temp <- unique(ctrl_exp_temp[!ctrl_exp_temp %in% c(target_rhss[pa], path_outs_disjuncts, dis, id)])
           cand_other_disjs <- cand_disjuncts[!grepl(id, cand_disjuncts)]
-          
+          if(length(cand_other_disjs) == 0L){
+            cand_other_disjs_supp <- ""
+          } else {
+            cand_other_disjs_supp <- paste0("!(", paste0(cand_other_disjs, collapse = "+"), ")*")
+          }
           #test_fac_cofacs[!toupper(unlist(test_fac_cofacs)) %in% toupper(c(candidate_cofacs, on_path_cofacs))]
           
-          test_fac_cofacs <- lapply(test_fac_cofacs, function(x) x[!toupper(x) %in% toupper(c(candidate_cofacs, on_path_cofacs))])
-          if(length(test_fac_cofacs) >= 1){test_fac_cofacs[which(unlist(lapply(test_fac_cofacs, function(x) length(x)<1)))] <- NULL}
+          # test_fac_cofacs <- lapply(test_fac_cofacs, function(x) x[!toupper(x) %in% toupper(c(candidate_cofacs, on_path_cofacs))])
+          # if(length(test_fac_cofacs) >= 1){test_fac_cofacs[which(unlist(lapply(test_fac_cofacs, function(x) length(x)<1)))] <- NULL}
+          # 
+          # 
+          #ca_cofac_pres <- paste0(paste0(unique(c(candidate_cofacs, on_path_cofacs, unlist(test_fac_cofacs))), collapse = "*"))
           
-          
-          ca_cofac_pres <- paste0(paste0(unique(c(candidate_cofacs, on_path_cofacs, unlist(test_fac_cofacs))), collapse = "*"))
+          #ca_cofac_pres <- paste0(paste0(unique(c(candidate_cofacs, on_path_cofacs, unlist(test_fac_cofacs))), collapse = "*"))
           
           #ca_cofac_pres <- paste0("*", paste0(unique(cofacs), collapse = "*"))
           #ca_cofac_pres <- paste0(paste0(unique(cofacs), collapse = "*"))
@@ -214,7 +231,7 @@ diff_correct <- function(m1, m2){
           # sup_cofac_temp <- lapply(test_fac_cofacs_supp_temp, function(x)
           #   paste0("!(", paste0(x, collapse = "*"), ")"))
           # 
-          sup_candidate_cofac_temp <- if(length(candidate_cofacs)>=1){paste0("!(", paste0(candidate_cofacs, collapse = "*"), ")")}else{NULL}
+          #sup_candidate_cofac_temp <- if(length(candidate_cofacs)>=1){paste0("!(", paste0(candidate_cofacs, collapse = "*"), ")")}else{NULL}
           
           #ca_cofac_supp <- if(length(sup_cofac_temp)>=1){paste0(paste0(sup_candidate_cofac_temp, collapse = "*"), "*", sup_candidate_cofac_temp)}else{NULL}
           
@@ -222,112 +239,144 @@ diff_correct <- function(m1, m2){
           #ca_cofac_supp <- paste0("!(", paste0(unique(cofacs), collapse = "*"), ")")
           
           
-          ce_temp_cofacs <- paste0("!(", paste0(unique(c(ctrl_exp_temp, cand_other_disjs)), collapse = "+"), ")")
+          #ce_temp_cofacs <- paste0("!(", paste0(unique(c(ctrl_exp_temp, cand_other_disjs)), collapse = "+"), ")")
           #ce_temp_cofacs_sup <- paste0(unique(c(ctrl_exp_temp, cofacs_neg, cand_other_disjs)), collapse = "+")
           #ctrl_exp_temp <- paste0(ctrl_exp_temp,  collapse = "+")
           #ctrl_exp_cofacs_present <- paste0("!(", ce_temp_cofacs, ")")
           #ctrl_exp_cofacs_supp <- paste0("!(", ce_temp_cofacs_sup, ")")
          
           ##########################################
+          ctrl_exp <- paste0(cand_other_disjs_supp, candidate_cofacs_pres)
           
-           if (length(cofacs) >= 1){
-            ctrl_exp_cofacs_present <- ifelse(ce_temp_cofacs == "!()", ca_cofac_pres,  paste0(ce_temp_cofacs, "*" ,ca_cofac_pres))
-            #ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", sup_candidate_cofac_temp, paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp))
-            ctrl_exp_cofacs_supp <- if(ce_temp_cofacs == "!()"){sup_candidate_cofac_temp}else{paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp)}
+          testdat <- ct2df(selectCases(ctrl_exp, fulldat))
+          
+          check_for_pairs <- split(testdat, 
+                                   testdat[setdiff(names(testdat), canvary)], 
+                                   drop = T)
+          
+          check_for_pairs <- lapply(check_for_pairs,
+                                    function(x) if(nrow(x) < 2){
+                                      x <- NULL
+                                    } else {
+                                      x <- x
+                                    }
+                                    )
+          ##\FIX THIS
+          check_for_pairs <- check_for_pairs[which(unlist(lapply(check_for_pairs, is.null)))] <- NULL
+          ##FIX THIS
+          #var(check_for_pairs[[2]]$G) > 0L
+          outvarcheck <- lapply(check_for_pairs, function(x) unique(x[outcome]))
+          
+          check_for_pairs <- check_for_pairs[unlist(lapply(outvarcheck, function(x) nrow(x) >1))]
+          
+          idx <- unlist(lapply(paths_idx, function(x) identical(x, pa))) #move this somewhere
+          
+          if(length(check_for_pairs) == 0L){
+            pa_check[idx] <- FALSE
           } else {
-            #ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
-             ctrl_exp_cofacs_present <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
-             ctrl_exp_cofacs_supp <- NULL
-          }
+            checkcov <- lapply(check_for_pairs, function(x) cov(x[id], x[outcome]))
+            checked <- lapply(checkcov, function(x) !(x %in% c(0L, NA)))
+            pa_check[idx] <- ifelse(checked, TRUE, FALSE)
+            } 
           
-          ctrl_exp_cofacs_present <- gsub("\\*$", "", ctrl_exp_cofacs_present)
-          ctrl_exp_cofacs_supp <- if(is.null(sup_candidate_cofac_temp)){NULL} else {
-            gsub("\\*$", "", ctrl_exp_cofacs_supp)}
-          
-          # if (length(c(candidate_cofacs, on_path_cofacs) >= 1)){
-          #   ctrl_exp_cofacs_present <- paste0(ce_temp_cofacs, ca_cofac_pres)
-          #   ctrl_exp_cofacs_supp <- paste0(ce_temp_cofacs, ca_cofac_supp)
-          # } else {
-          #   ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ce_temp_cofacs
+          # #  if (length(cofacs) >= 1){
+          # #   ctrl_exp_cofacs_present <- ifelse(ce_temp_cofacs == "!()", ca_cofac_pres,  paste0(ce_temp_cofacs, "*" ,ca_cofac_pres))
+          # #   #ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", sup_candidate_cofac_temp, paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp))
+          # #   ctrl_exp_cofacs_supp <- if(ce_temp_cofacs == "!()"){sup_candidate_cofac_temp}else{paste0(ce_temp_cofacs, "*", sup_candidate_cofac_temp)}
+          # # } else {
+          # #   #ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
+          # #    ctrl_exp_cofacs_present <- ifelse(ce_temp_cofacs == "!()", "", ce_temp_cofacs)
+          # #    ctrl_exp_cofacs_supp <- NULL
+          # # }
+          # # 
+          # # ctrl_exp_cofacs_present <- gsub("\\*$", "", ctrl_exp_cofacs_present)
+          # # ctrl_exp_cofacs_supp <- if(is.null(sup_candidate_cofac_temp)){NULL} else {
+          # #   gsub("\\*$", "", ctrl_exp_cofacs_supp)}
+          # 
+          # # if (length(c(candidate_cofacs, on_path_cofacs) >= 1)){
+          # #   ctrl_exp_cofacs_present <- paste0(ce_temp_cofacs, ca_cofac_pres)
+          # #   ctrl_exp_cofacs_supp <- paste0(ce_temp_cofacs, ca_cofac_supp)
+          # # } else {
+          # #   ctrl_exp_cofacs_present <- ctrl_exp_cofacs_supp <- ce_temp_cofacs
+          # # }
+          # 
+          # 
+          # 
+          # 
+          # #############################################33
+          # 
+          # #ctrl_exp_temp <- unlist(lapply(on_path_outcomes, function(x) ctrl_exp_temp[-grepl(x, ctrl_exp_temp)]))
+          # 
+          # ctrl_cond <- c(ctrl_exp_cofacs_present, ctrl_exp_cofacs_supp)
+          # ctrl_cond <- unique(ctrl_cond)
+          # ctrl_cond <- ctrl_cond[sapply(ctrl_cond, function(x) length(x) > 0)]
+          # cond_check <- vector("logical", length(ctrl_cond))
+          # names(cond_check) <- ctrl_cond
+          # for(cond in ctrl_cond){
+          # 
+          # #dummy code background factor configurations
+          #   full_path <- c(id, target_rhss[pa]) #needs to come earlier, take out on_path outcomes from ctrl_cond
+          #   #dum_dat <- fulldat[,-which(names(fulldat) %in% full_path)]
+          #   dum_dat <- fulldat
+          #   pre_dum_confs <- if(cond == ""){fulldat}else{ct2df(selectCases(cond, dum_dat))}
+          #   
+          #   if (nrow(pre_dum_confs) == 0L){
+          #     cond_check[names(cond_check) == cond] <- FALSE
+          #   } else {
+          #   
+          #     latent_confs <- unique(do.call('paste0', pre_dum_confs))
+          #     allconfs_dummify <- do.call('paste0', dum_dat)
+          #     tempdat <- fulldat
+          #     tempdat$dum <- as.integer(allconfs_dummify %in% latent_confs)
+          #     
+          #     #testdat <- tempdat[,which(names(tempdat) %in% c(toupper(full_path), "dum"))]
+          #     testdat <- tempdat[,which(names(tempdat) %in% c(toupper(id), outcome, "dum"))]
+          #     
+          #     testdat <- unique(testdat[testdat$dum == 1,])
+          #     
+          #     ####################
+          #     if (!id == toupper(id)){
+          #       testdat[, toupper(id)] <- as.integer(!testdat[, toupper(id)])
+          #     }
+          #     
+          #     idvals <- unique(testdat[,toupper(id)])
+          #     if (length(idvals) == 1){cond_check[names(cond_check) == cond] <- FALSE} else {
+          #       mdat <- testdat[testdat[,toupper(id)] %in% idvals]
+          #       cond_check[names(cond_check) == cond] <- ifelse(sum(mdat[,toupper(id)] == mdat[,outcome]) < 2, FALSE, TRUE)
+          #              
+          #              
+          #     }
+          #     
+          #   
+          #     ########################  
+          #     
+          #     
+          #     # testmod <- paste0(id, "<->", outcome)
+          #     # 
+          #     # 
+          #     # datcheck <- selectCases(testmod, testdat)
+          #     # if (!all(dim(datcheck) == dim(testdat)) | nrow(testdat) == 1){cond_check[names(cond_check) == cond] <- FALSE} else {
+          #     #   if (all(datcheck == testdat)) {cond_check[names(cond_check) == cond] <- TRUE}
+          #     # }
+          #     
+          #     #if (all(selectCases(testmod, testdat) == testdat)) {cond_check[names(cond_check) == cond] <- TRUE}
+          #     #if (identical(selectCases(testmod, testdat), testdat[1,])) {cond_check[names(cond_check) == cond] <- TRUE}
+          #     #fix the rest
+          #   }
+          #   
           # }
-          
-          
-          
-          
-          #############################################33
-          
-          #ctrl_exp_temp <- unlist(lapply(on_path_outcomes, function(x) ctrl_exp_temp[-grepl(x, ctrl_exp_temp)]))
-          
-          ctrl_cond <- c(ctrl_exp_cofacs_present, ctrl_exp_cofacs_supp)
-          ctrl_cond <- unique(ctrl_cond)
-          ctrl_cond <- ctrl_cond[sapply(ctrl_cond, function(x) length(x) > 0)]
-          cond_check <- vector("logical", length(ctrl_cond))
-          names(cond_check) <- ctrl_cond
-          for(cond in ctrl_cond){
-          
-          #dummy code background factor configurations
-            full_path <- c(id, target_rhss[pa]) #needs to come earlier, take out on_path outcomes from ctrl_cond
-            #dum_dat <- fulldat[,-which(names(fulldat) %in% full_path)]
-            dum_dat <- fulldat
-            pre_dum_confs <- if(cond == ""){fulldat}else{ct2df(selectCases(cond, dum_dat))}
-            
-            if (nrow(pre_dum_confs) == 0L){
-              cond_check[names(cond_check) == cond] <- FALSE
-            } else {
-            
-              latent_confs <- unique(do.call('paste0', pre_dum_confs))
-              allconfs_dummify <- do.call('paste0', dum_dat)
-              tempdat <- fulldat
-              tempdat$dum <- as.integer(allconfs_dummify %in% latent_confs)
-              
-              #testdat <- tempdat[,which(names(tempdat) %in% c(toupper(full_path), "dum"))]
-              testdat <- tempdat[,which(names(tempdat) %in% c(toupper(id), outcome, "dum"))]
-              
-              testdat <- unique(testdat[testdat$dum == 1,])
-              
-              ####################
-              if (!id == toupper(id)){
-                testdat[, toupper(id)] <- as.integer(!testdat[, toupper(id)])
-              }
-              
-              idvals <- unique(testdat[,toupper(id)])
-              if (length(idvals) == 1){cond_check[names(cond_check) == cond] <- FALSE} else {
-                mdat <- testdat[testdat[,toupper(id)] %in% idvals]
-                cond_check[names(cond_check) == cond] <- ifelse(sum(mdat[,toupper(id)] == mdat[,outcome]) < 2, FALSE, TRUE)
-                       
-                       
-              }
-              
-            
-              ########################  
-              
-              
-              # testmod <- paste0(id, "<->", outcome)
-              # 
-              # 
-              # datcheck <- selectCases(testmod, testdat)
-              # if (!all(dim(datcheck) == dim(testdat)) | nrow(testdat) == 1){cond_check[names(cond_check) == cond] <- FALSE} else {
-              #   if (all(datcheck == testdat)) {cond_check[names(cond_check) == cond] <- TRUE}
-              # }
-              
-              #if (all(selectCases(testmod, testdat) == testdat)) {cond_check[names(cond_check) == cond] <- TRUE}
-              #if (identical(selectCases(testmod, testdat), testdat[1,])) {cond_check[names(cond_check) == cond] <- TRUE}
-              #fix the rest
-            }
-            
-          }
+          # # if (length(cond_check) == 1){
+          # #   dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check, TRUE, FALSE)} else 
+          # #   {dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
+          #  
+          # idx <- unlist(lapply(paths_idx, function(x) identical(x, pa)))
           # if (length(cond_check) == 1){
-          #   dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check, TRUE, FALSE)} else 
-          #   {dis_facs_check[names(dis_facs_check) == id] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present] & !cond_check[names(cond_check) == ctrl_exp_cofacs_supp], TRUE, FALSE)}
-           
-          idx <- unlist(lapply(paths_idx, function(x) identical(x, pa)))
-          if (length(cond_check) == 1){
-            pa_check[idx] <- ifelse(cond_check, TRUE, FALSE)} else {
-              pa_check[idx] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present], TRUE, FALSE)
-            }
-  
-          
-          }
+          #   pa_check[idx] <- ifelse(cond_check, TRUE, FALSE)} else {
+          #     pa_check[idx] <- ifelse(cond_check[names(cond_check) == ctrl_exp_cofacs_present], TRUE, FALSE)
+          #   }
+          # 
+          # 
+           }
         }
         dis_facs_check[names(dis_facs_check) == id] <- ifelse(any(pa_check), TRUE, FALSE)
       }
