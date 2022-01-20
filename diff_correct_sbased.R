@@ -149,6 +149,64 @@ diff_correct <- function(m1, m2){
   for (dis in test_disjuncts){
     
     dis_facs <- unlist(strsplit(dis, "\\*"))
+#_____________________________________________________________    
+    pre_dum_confs <- ct2df(selectCases(dis, fulldat))
+    
+    latent_confs <- unique(do.call('paste0', pre_dum_confs))
+    allconfs_dummify <- do.call('paste0', fulldat)
+    tempdat <- fulldat
+    tempdat$dum <- as.integer(allconfs_dummify %in% latent_confs)
+    #testdat <- unique(tempdat[,which(!names(tempdat) %in% dis_facs)])
+    testdat <- unique(tempdat)
+    
+    
+    spl <- split(testdat, list(testdat$dum, testdat[,names(testdat)==toupper(outcome)]))
+    
+    both <- spl[names(spl) == '1.1'][[1]]
+    neither <- spl[names(spl) == '0.0'][[1]]
+    cause <- spl[names(spl) == '1.0'][[1]]
+    effect <- spl[names(spl) == '0.1'][[1]]
+      
+    resdis <- test_disjuncts[-which(test_disjuncts == dis)]
+    
+    if (length(resdis) >= 1){
+      res_neg <- paste0(resdis, collapse = "+")
+      res_neg <- paste0("!(", res_neg, ")")
+      both <- ct2df(selectCases(res_neg, both))
+      names(both) <- names(testdat)  
+    }
+    
+    if(nrow(both) < 1 | nrow(neither) < length(dis_facs)){return(FALSE)}
+    
+    outv_flip <- ifelse(outcome == toupper(outcome), 0, 1)
+    names(outv_flip) <- outcome
+    facvals <- unlist(lapply(dis_facs, function(x) ifelse(x == toupper(x), 1, 0)))
+    names(facvals) <- toupper(dis_facs)
+    facvals_neg <- vector("list", length(facvals))
+    facvals_neg <- lapply(names(facvals), 
+                          function(x) 
+                            c(ifelse(facvals[names(facvals) == x] == 1, 0, 1), 
+                              facvals[-which(names(facvals) == x)]))
+    #allneg <- c(ifelse(facvals == 1, 0, 1), outv_flip)
+    #fnlist <- lapply(facvals_neg, as.list)
+    
+    tu <- names(neither)[which(names(neither) %in% c(toupper(dis_facs)))]
+    facvals_neg <- lapply(facvals_neg, function(z)
+      z[match(tu, toupper(names(z)))])
+    
+    #ntemp <- lapply(facvals_neg, function(x) neither[as.list(x), nomatch = NULL]) 
+    
+    ntemp <- lapply(facvals_neg, function(x)
+      if (length(x) == 1){neither[neither[which(names(neither) == names(x))] == x,]}else{
+        neither[which(do.call(paste0, neither[,which(names(neither) %in% names(x))]) %in% paste(x, collapse = "")),]  
+      })
+      
+    
+    rcc <- any(unlist(lapply(ntemp, function(x) nrow(x) < 1)))
+    if(rcc){return(FALSE)}
+#-------------------------------------------------------
+    
+    
     
     dis_facs_check <- vector("logical", length(dis_facs))
     names(dis_facs_check) <- dis_facs
@@ -160,11 +218,20 @@ diff_correct <- function(m1, m2){
         
         #closest_path_asf_idx <- max(which(unlist(lapply(target_lhss_facs, function(x) id %in% x))))
         #paths_idx <- which(unlist(lapply(target_lhss_facs[1:outcome_asf_idx], function(x) id %in% x)))
+        id_causes <- edgelist$disj[-which(edgelist$disj == toupper(id))]
+        id_causes <- lapply(id_causes, function(x) all_simple_paths(graph, from = x, to = toupper(id)))
+        id_causes <- names(unlist(id_causes))
+        id_causes <- id_causes[-which(id_causes == toupper(id))]
+        id_effects <- all_simple_paths(graph, from = toupper(id))
+        id_effects <- names(unlist(id_effects))
+        id_effects <- id_effects[-which(id_effects == toupper(id))]
         paths_idx <- viable_paths[names(viable_paths) == id]
         paths_idx <- unlist(paths_idx, recursive = FALSE)
         pa_check <- vector("logical", length(paths_idx))
         for (pa in paths_idx){
-          canvary <- c(toupper(id), toupper(target_rhss[pa]))
+          
+          
+          canvary <- unique(c(toupper(id), toupper(target_rhss[pa]), id_causes, id_effects))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
           if(is.null(candidate_cofacs)){
@@ -246,13 +313,30 @@ diff_correct <- function(m1, m2){
           #ctrl_exp_cofacs_supp <- paste0("!(", ce_temp_cofacs_sup, ")")
          
           ##########################################
-          ctrl_exp <- paste0(cand_other_disjs_supp, candidate_cofacs_pres)
-          
-          testdat <- ct2df(selectCases(ctrl_exp, fulldat))
-          
-          check_for_pairs <- split(testdat, 
-                                   testdat[setdiff(names(testdat), canvary)], 
+          # ctrl_exp <- paste0(cand_other_disjs_supp, candidate_cofacs_pres)
+          # 
+          # ctrl_exp <- gsub("\\*$", "", ctrl_exp)
+          # 
+          # if(ctrl_exp == ""){
+          #   testdat <- fulldat
+          # } else{
+          #   testdat <- ct2df(selectCases(ctrl_exp, fulldat))  
+          # }
+          # 
+          if(all(names(testdat) %in% canvary)){
+            check_for_pairs <- list(testdat)
+          } else {
+            # check_for_pairs <- split(testdat, 
+            #                        testdat[setdiff(names(testdat), canvary)], 
+            #                        drop = T)
+            
+            check_for_pairs <- split(testdat, 
+                                   testdat[setdiff(names(fulldat), canvary)], 
                                    drop = T)
+          }
+          
+          
+          
           
           check_for_pairs <- lapply(check_for_pairs,
                                     function(x) if(nrow(x) < 2){
