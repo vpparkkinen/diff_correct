@@ -225,13 +225,32 @@ diff_correct <- function(m1, m2){
         id_effects <- all_simple_paths(graph, from = toupper(id))
         id_effects <- names(unlist(id_effects))
         id_effects <- id_effects[-which(id_effects == toupper(id))]
+        
+        cofacs <- cofac_extract(id, dis)
+        
+        if(!is.null(cofacs)){
+          cofac_potcauses <- lapply(cofacs, function(x) 
+            unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
+          cofac_causes <- vector("list", length(cofacs))
+          for(co in seq_along(cofacs)){
+            cofac_causes[[co]] <- lapply(cofac_potcauses[[co]],
+                                         function(x)
+                                           all_simple_paths(graph, 
+                                                            from = x, 
+                                                            to = toupper(cofacs[co]))) 
+          }
+          cofac_causes <- names(unlist(cofac_causes))
+        }
+        
+        
+        
         paths_idx <- viable_paths[names(viable_paths) == id]
         paths_idx <- unlist(paths_idx, recursive = FALSE)
         pa_check <- vector("logical", length(paths_idx))
         for (pa in paths_idx){
           
           
-          canvary <- unique(c(toupper(id), toupper(target_rhss[pa]), id_causes, id_effects))
+          canvary <- unique(c(toupper(id), toupper(target_rhss[pa]), id_causes, id_effects, cofac_causes))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
           if(is.null(candidate_cofacs)){
@@ -323,7 +342,7 @@ diff_correct <- function(m1, m2){
           #   testdat <- ct2df(selectCases(ctrl_exp, fulldat))  
           # }
           # 
-          if(all(names(testdat) %in% canvary)){
+          if(all(names(fulldat) %in% canvary)){
             check_for_pairs <- list(testdat)
           } else {
             # check_for_pairs <- split(testdat, 
@@ -352,15 +371,23 @@ diff_correct <- function(m1, m2){
           outvarcheck <- lapply(check_for_pairs, function(x) unique(x[outcome]))
           
           check_for_pairs <- check_for_pairs[unlist(lapply(outvarcheck, function(x) nrow(x) >1))]
+          check_for_pairs <- check_for_pairs[unlist(lapply(check_for_pairs,
+                                                           function(x)
+                                                             length(unique(x$dum)) > 1))]
           
-          idx <- which(unlist(lapply(paths_idx, function(x) identical(x, pa)))) #move this somewhere
+          #idx <- which(unlist(lapply(paths_idx, function(x) identical(x, pa)))) #move this somewhere
           
           if(length(check_for_pairs) == 0L){
             pa_check[idx] <- FALSE
           } else {
-            checkcov <- lapply(check_for_pairs, function(x) cov(x[toupper(id)], x[outcome]))
-            checked <- lapply(checkcov, function(x) !(x %in% c(0L, NA)))
-            pa_check[idx] <- ifelse(any(unlist(checked)), TRUE, FALSE)
+            dpair_exist <- lapply(check_for_pairs, function(a)
+              a[a["dum"] == 0 & a[toupper(outcome)] == 0 | a["dum"] == 1 & a[toupper(outcome)] == 1,])
+            dpair_exist <- lapply(dpair_exist, function(x) nrow(x) > 1)
+            pa_check[idx] <- any(unlist(dpair_exist))
+            
+            # checkcov <- lapply(check_for_pairs, function(x) cov(x[toupper(id)], x[outcome]))
+            # checked <- lapply(checkcov, function(x) !(x %in% c(0L, NA)))
+            # pa_check[idx] <- ifelse(any(unlist(checked)), TRUE, FALSE)
             } 
           
           # #  if (length(cofacs) >= 1){
