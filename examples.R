@@ -45,14 +45,16 @@ diff_correct(m1,m2)
 
 correct3(m2,m1)
 
-targets <- replicate(20, randomCsf(7, n.asf = 3))
+# <---script for testing for false negatives
+
+targets <- replicate(50, randomCsf(7, n.asf = 3))
 expansions <- lapply(targets, chain.expand2b)
 
 candidates <- lapply(expansions, `[`, 2 )
 candidates <- lapply(candidates, unlist)
 
 
-lapply(candidates[[1]], function(x) diff_correct(targets[1], x))
+#lapply(candidates[[1]], function(x) diff_correct(targets[1], x))
 
 results <- vector("list", length(targets))
 for(i in seq_along(targets)){
@@ -60,11 +62,15 @@ for(i in seq_along(targets)){
 }
 
 all(unlist(results))
-mapply(function(x,y) lapply(y, function(z) diff_correct(x,z)), targets, candidates)
-lapply(candidates[[2]], function(x) diff_correct(targets[2], x))
 
-m1 <-  "(C*f*d*e+D*c*e<->A)*(F*d*e<->B)*(f*e*c+F*a+D*f*e<->G)"
-m2 <-  "E*F<->G"
 
-m1 <- "(A*G+a*g*B<->E)*(E*G+d*E<->F)"
-m2 <- "E*G<->F"
+# script for testing for false negatives --->
+
+# mapply(function(x,y) lapply(y, function(z) diff_correct(x,z)), targets, candidates)
+# lapply(candidates[[2]], function(x) diff_correct(targets[2], x))
+# 
+# m1 <-  "(C*f*d*e+D*c*e<->A)*(F*d*e<->B)*(f*e*c+F*a+D*f*e<->G)"
+# m2 <-  "E*F<->G"
+# 
+# m1 <- "(A*G+a*g*B<->E)*(E*G+d*E<->F)"
+# m2 <- "E*G<->F"

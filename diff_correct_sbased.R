@@ -240,6 +240,8 @@ diff_correct <- function(m1, m2){
                                                             to = toupper(cofacs[co]))) 
           }
           cofac_causes <- names(unlist(cofac_causes))
+        } else {
+          cofac_causes <- NULL
         }
         
         
@@ -375,7 +377,7 @@ diff_correct <- function(m1, m2){
                                                            function(x)
                                                              length(unique(x$dum)) > 1))]
           
-          #idx <- which(unlist(lapply(paths_idx, function(x) identical(x, pa)))) #move this somewhere
+          idx <- which(unlist(lapply(paths_idx, function(x) identical(x, pa)))) #move this somewhere
           
           if(length(check_for_pairs) == 0L){
             pa_check[idx] <- FALSE
