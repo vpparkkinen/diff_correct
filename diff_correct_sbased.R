@@ -115,8 +115,8 @@ diff_correct <- function(m1, m2){
   
   
   
-  edgelist <- data.frame(disj = toupper(unlist(target_lhss_facs)),
-                         out = toupper(unlist(rhsreps)))
+  edgelist <- data.frame(disj = unname(toupper(unlist(target_lhss_facs))),
+                         out = unname(toupper(unlist(rhsreps))))
   graph <- graph.edgelist(as.matrix(edgelist))
   
   cand_facs <- unlist(strsplit(cand_disjuncts, "\\*"))
@@ -229,19 +229,24 @@ diff_correct <- function(m1, m2){
         cofacs <- cofac_extract(id, dis)
         
         if(!is.null(cofacs)){
-          cofac_potcauses <- lapply(cofacs, function(x) 
+          cofac_potdep <- lapply(cofacs, function(x) 
             unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
           cofac_causes <- vector("list", length(cofacs))
           for(co in seq_along(cofacs)){
-            cofac_causes[[co]] <- lapply(cofac_potcauses[[co]],
+            cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
                                          function(x)
                                            all_simple_paths(graph, 
                                                             from = x, 
                                                             to = toupper(cofacs[co]))) 
           }
           cofac_causes <- names(unlist(cofac_causes))
+          cofac_effects <- lapply(cofacs, function(x)
+            all_simple_paths(graph, from = toupper(x)))
+          cofac_effects <- names(unlist(cofac_effects))
+          
         } else {
           cofac_causes <- NULL
+          cofac_effects <- NULL
         }
         
         
@@ -252,7 +257,12 @@ diff_correct <- function(m1, m2){
         for (pa in paths_idx){
           
           
-          canvary <- unique(c(toupper(id), toupper(target_rhss[pa]), id_causes, id_effects, cofac_causes))
+          canvary <- unique(c(toupper(id), 
+                              toupper(target_rhss[pa]), 
+                              id_causes, 
+                              id_effects, 
+                              cofac_causes,
+                              cofac_effects))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
           if(is.null(candidate_cofacs)){
