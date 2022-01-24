@@ -35,9 +35,9 @@ for(fac in seq_along(cand_facs)){
 }
 names(cand_fac_paths) <- cand_facs
 
-cand_fac_paths
+viable_paths <- lapply(cand_fac_paths, function(x) lapply(x, function(y) which(target_rhss %in% y)))
 
-lapply(cand_fac_paths, function(x) lapply(x, function(y) which(target_rhss %in% y)))
+
 
 adj_matrix <- as.matrix(get.adjacency(edgelist))
 all_simple_paths(adj_matrix)
