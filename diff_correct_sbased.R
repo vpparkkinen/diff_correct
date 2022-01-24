@@ -166,8 +166,11 @@ diff_correct <- function(m1, m2){
     neither <- spl[names(spl) == '0.0'][[1]]
     cause <- spl[names(spl) == '1.0'][[1]]
     effect <- spl[names(spl) == '0.1'][[1]]
+    
+    if(nrow(both) < 1){return(FALSE)}
       
     resdis <- test_disjuncts[-which(test_disjuncts == dis)]
+    
     
     if (length(resdis) >= 1){
       res_neg <- paste0(resdis, collapse = "+")
@@ -257,12 +260,18 @@ diff_correct <- function(m1, m2){
         for (pa in paths_idx){
           
           
-          canvary <- unique(c(toupper(id), 
-                              toupper(target_rhss[pa]), 
-                              id_causes, 
-                              id_effects, 
+          canvary <- unique(c(toupper(id),
+                              toupper(target_rhss[pa]),
+                              id_causes,
+                              id_effects,
                               cofac_causes,
                               cofac_effects))
+          
+          #           
+          # canvary <- unique(c(toupper(id), 
+          #                     toupper(target_rhss[pa]), 
+          #                     id_causes, 
+          #                     id_effects))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
           if(is.null(candidate_cofacs)){
