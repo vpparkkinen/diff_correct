@@ -47,7 +47,7 @@ correct3(m2,m1)
 
 # <---script for testing for false negatives
 
-targets <- replicate(50, randomCsf(7, n.asf = 3))
+targets <- replicate(30, randomCsf(7, n.asf = 3))
 expansions <- lapply(targets, chain.expand2b)
 
 candidates <- lapply(expansions, `[`, 2 )
