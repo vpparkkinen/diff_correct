@@ -159,6 +159,7 @@ diff_correct <- function(m1, m2){
     #testdat <- unique(tempdat[,which(!names(tempdat) %in% dis_facs)])
     testdat <- unique(tempdat)
     
+    if(sum(testdat$dum) < 1){return(FALSE)}
     
     spl <- split(testdat, list(testdat$dum, testdat[,names(testdat)==toupper(outcome)]))
     
