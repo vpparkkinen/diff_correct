@@ -225,32 +225,56 @@ diff_correct <- function(m1, m2){
         id_causes <- edgelist$disj[-which(edgelist$disj == toupper(id))]
         id_causes <- lapply(id_causes, function(x) all_simple_paths(graph, from = x, to = toupper(id)))
         id_causes <- names(unlist(id_causes))
-        id_causes <- id_causes[-which(id_causes == toupper(id))]
+        id_causes <- unique(id_causes[-which(id_causes == toupper(id))])
+        
         id_effects <- all_simple_paths(graph, from = toupper(id))
         id_effects <- names(unlist(id_effects))
         id_effects <- id_effects[-which(id_effects == toupper(id))]
         
         cofacs <- cofac_extract(id, dis)
         
-        if(!is.null(cofacs)){
-          cofac_potdep <- lapply(cofacs, function(x) 
-            unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
-          cofac_causes <- vector("list", length(cofacs))
-          for(co in seq_along(cofacs)){
-            cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
-                                         function(x)
-                                           all_simple_paths(graph, 
-                                                            from = x, 
-                                                            to = toupper(cofacs[co]))) 
-          }
-          cofac_causes <- names(unlist(cofac_causes))
-          cofac_effects <- lapply(cofacs, function(x)
+        
+        
+        
+        # if(!is.null(cofacs)){
+        #   cofac_potdep <- lapply(cofacs, function(x) 
+        #     unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
+        #   cofac_causes <- vector("list", length(cofacs))
+        #   for(co in seq_along(cofacs)){
+        #     cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
+        #                                  function(x)
+        #                                    all_simple_paths(graph, 
+        #                                                     from = x, 
+        #                                                     to = toupper(cofacs[co]))) 
+        #   }
+        #   cofac_causes <- names(unlist(cofac_causes))
+        #   cofac_effects <- lapply(cofacs, function(x)
+        #     all_simple_paths(graph, from = toupper(x)))
+        #   cofac_effects <- names(unlist(cofac_effects))
+        #   
+        # } else {
+        #   cofac_causes <- NULL
+        #   cofac_effects <- NULL
+        # }
+        
+        if(!is.null(id_causes)){
+          # idc_potdep <- lapply(id_causes, function(x) 
+          #   unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
+          # # cofac_causes <- vector("list", length(cofacs))
+          # for(co in seq_along(cofacs)){
+          #   cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
+          #                                function(x)
+          #                                  all_simple_paths(graph, 
+          #                                                   from = x, 
+          #                                                   to = toupper(cofacs[co]))) 
+          # }
+          #cofac_causes <- names(unlist(cofac_causes))
+          idc_effects <- lapply(id_causes, function(x)
             all_simple_paths(graph, from = toupper(x)))
-          cofac_effects <- names(unlist(cofac_effects))
+          idc_effects <- names(unlist(idc_effects))
           
         } else {
-          cofac_causes <- NULL
-          cofac_effects <- NULL
+          idc_effects <- NULL
         }
         
         
@@ -261,18 +285,19 @@ diff_correct <- function(m1, m2){
         for (pa in paths_idx){
           
           
+          # canvary <- unique(c(toupper(id),
+          #                     toupper(target_rhss[pa]),
+          #                     id_causes,
+          #                     id_effects,
+          #                     cofac_causes,
+          #                     cofac_effects))
+          
+
           canvary <- unique(c(toupper(id),
                               toupper(target_rhss[pa]),
                               id_causes,
                               id_effects,
-                              cofac_causes,
-                              cofac_effects))
-          
-          #           
-          # canvary <- unique(c(toupper(id), 
-          #                     toupper(target_rhss[pa]), 
-          #                     id_causes, 
-          #                     id_effects))
+                              idc_effects))
           #extract co-factors for candidate factor and its effects on path to outcome
           candidate_cofacs <- cofac_extract(id, dis)
           if(is.null(candidate_cofacs)){
