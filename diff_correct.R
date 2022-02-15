@@ -304,7 +304,7 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
     
     #out <- any(outvar == 0L)
     
-    if (!out & length(potconf) >= 1){
+    if (length(potconf) >= 1){
       
       potconf <- unique(unlist(potconf))
       #lapply(potconf, function(y) !y %in% potouts$Factor)
@@ -316,10 +316,11 @@ diff_checker <- function(fulldat, dis, outcome, potouts, resdis){
         ctest <- lapply(potconf, function(z) cov(flt[,..z], flt[,..outcome]) %in% c(0L, NA))
         #ctest <- lapply(ctest, unlist)
         #ctest <- any(unlist(lapply(ctest, all)))
-        out <- any(unlist(ctest))
+        noconfound <- any(unlist(ctest))
+        out <- out & noconfound
         #out <- ctest  
       }
-      
+        
     }
     
     
