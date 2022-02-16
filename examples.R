@@ -46,8 +46,8 @@ diff_correct(m1,m2)
 correct3(m2,m1)
 
 # <---script for testing for false negatives
-
-targets <- replicate(30, randomCsf(7, n.asf = 3))
+set.seed(50)
+targets <- replicate(10, randomCsf(7, n.asf = 3))
 expansions <- lapply(targets, chain.expand2b)
 
 candidates <- lapply(expansions, `[`, 2 )
@@ -61,8 +61,14 @@ for(i in seq_along(targets)){
   results[[i]] <- lapply(candidates[[i]], function(x) diff_correct(targets[i], x))
 }
 
+uresults <- unlist(results)
+wrong <- which(uresults == FALSE)
+uresults[wrong]
 all(unlist(results))
 
+#problem case
+m1 <- "(f*a*G*e+A*E*g*f+A*e*F<->C)*(f*c*g*A+G*e*c<->D)"
+m2 <- "f*c*g*A+G*e*c<->D"
 
 # script for testing for false negatives --->
 
