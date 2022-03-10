@@ -121,15 +121,17 @@ diff_correct <- function(m1, m2){
   
   cand_facs <- unlist(strsplit(cand_disjuncts, "\\*"))
   cand_facs_uc <- toupper(cand_facs)
-  cand_fac_paths <- vector("list", length(cand_facs))
+  cand_facs_uc <- unique(cand_facs_uc)
+  #cand_fac_paths <- vector("list", length(cand_facs))
+  cand_fac_paths <- vector("list", length(cand_facs_uc))
   
-  for(fac in seq_along(cand_facs)){
+  for(fac in seq_along(cand_facs_uc)){
     temppaths <- all_simple_paths(graph, from = cand_facs_uc[fac], to = outcome)
     cand_fac_paths[[fac]] <- lapply(temppaths, function(x) as.character(names(x)))
     if(length(cand_fac_paths[[fac]]) == 0L) {cand_fac_paths[[fac]] <- NA}
     
   }
-  names(cand_fac_paths) <- cand_facs
+  names(cand_fac_paths) <- cand_facs_uc
   
   # first factor in cand_fac_paths is the lhs factor, must be excluded when determining
   # asf connections
@@ -279,7 +281,7 @@ diff_correct <- function(m1, m2){
         
         
         
-        paths_idx <- viable_paths[names(viable_paths) == id]
+        paths_idx <- viable_paths[names(viable_paths) == toupper(id)]
         paths_idx <- unlist(paths_idx, recursive = FALSE)
         pa_check <- vector("logical", length(paths_idx))
         for (pa in paths_idx){
