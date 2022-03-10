@@ -238,26 +238,26 @@ diff_correct <- function(m1, m2){
         
         
         
-        # if(!is.null(cofacs)){
-        #   cofac_potdep <- lapply(cofacs, function(x) 
-        #     unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
-        #   cofac_causes <- vector("list", length(cofacs))
-        #   for(co in seq_along(cofacs)){
-        #     cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
-        #                                  function(x)
-        #                                    all_simple_paths(graph, 
-        #                                                     from = x, 
-        #                                                     to = toupper(cofacs[co]))) 
-        #   }
-        #   cofac_causes <- names(unlist(cofac_causes))
-        #   cofac_effects <- lapply(cofacs, function(x)
-        #     all_simple_paths(graph, from = toupper(x)))
-        #   cofac_effects <- names(unlist(cofac_effects))
-        #   
-        # } else {
-        #   cofac_causes <- NULL
-        #   cofac_effects <- NULL
-        # }
+        if(!is.null(cofacs)){
+          cofac_potdep <- lapply(cofacs, function(x)
+            unique(edgelist$disj[-which(edgelist$disj == toupper(x))]))
+          cofac_causes <- vector("list", length(cofacs))
+          for(co in seq_along(cofacs)){
+            cofac_causes[[co]] <- lapply(cofac_potdep[[co]],
+                                         function(x)
+                                           all_simple_paths(graph,
+                                                            from = x,
+                                                            to = toupper(cofacs[co])))
+          }
+          cofac_causes <- names(unlist(cofac_causes))
+          cofac_effects <- lapply(cofacs, function(x)
+            all_simple_paths(graph, from = toupper(x)))
+          cofac_effects <- names(unlist(cofac_effects))
+
+        } else {
+          cofac_causes <- NULL
+          cofac_effects <- NULL
+        }
         
         if(!is.null(id_causes)){
           # idc_potdep <- lapply(id_causes, function(x) 
@@ -287,110 +287,29 @@ diff_correct <- function(m1, m2){
         for (pa in paths_idx){
           
           
-          # canvary <- unique(c(toupper(id),
-          #                     toupper(target_rhss[pa]),
-          #                     id_causes,
-          #                     id_effects,
-          #                     cofac_causes,
-          #                     cofac_effects))
-          
-
           canvary <- unique(c(toupper(id),
                               toupper(target_rhss[pa]),
                               id_causes,
                               id_effects,
-                              idc_effects))
+                              cofac_causes,
+                              cofac_effects,
+                              cofacs))
+          
+
+          # canvary <- unique(c(toupper(id),
+          #                     toupper(target_rhss[pa]),
+          #                     id_causes,
+          #                     id_effects,
+          #                     idc_effects))
           #extract co-factors for candidate factor and its effects on path to outcome
-          candidate_cofacs <- cofac_extract(id, dis)
-          if(is.null(candidate_cofacs)){
-            candidate_cofacs_pres <- ""
-          } else {
-            candidate_cofacs_pres <- paste0(candidate_cofacs, collapse = "*")
-          }
-          #candidate_cofacs_neg <- case_flipper(candidate_cofacs)
-          
-          
-          
-          #test_fac_cofacs <- cofac_extract(id, unlist(target_lhss_disjuncts[pa:outcome_asf_idx]))  
-          
-          # test_fac_cofacs <- lapply(unlist(target_lhss_disjuncts[pa]),
-          #                           function(x) cofac_extract(id, x))
-          # test_fac_cofacs <- unlist(test_fac_cofacs[!unlist(lapply(test_fac_cofacs, is.null))])
-          # 
-          # #test_fac_cofacs_supp_temp <- test_fac_cofacs
-          # 
-          # #always_on_cofacs <- paste0(unlist(test_fac_cofacs), collapse = "*")
-          # 
-          # #path_outs <- on_path_outcomes[pa]
-          # path_outs <- target_rhss[pa]
-          # #temp <- unlist(target_lhss_disjuncts[pa:(outcome_asf_idx - 1)])
-          # temp <- unlist(target_lhss_disjuncts[pa])
-          # #path_outs_disjuncts <- unlist(lapply(on_path_outcomes[pa:outcome_asf_idx], function(x) temp[grepl(x, temp)]))
-          # path_outs_disjuncts <- unlist(lapply(target_rhss[pa], function(x) temp[grepl(x, temp)]))
-          # on_path_cofacs <- unlist(lapply(path_outs, function(x) cofac_extract(x, path_outs_disjuncts)))
-          # #cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs), unlist(candidate_cofacs))
-          # cofacs <- c(unlist(test_fac_cofacs), unlist(on_path_cofacs))
-          # #cofacs <- c(test_fac_cofacs, on_path_cofacs)
-          # #cofacs_neg <- case_flipper(cofacs) 
-          # 
-          # 
-          # ctrl_exp_temp <- unlist(target_lhss_disjuncts[pa])
-          # #ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)] #this would not select disjuncts that feature the cand fac
-          # ctrl_exp_temp <- ctrl_exp_temp[!grepl(id, ctrl_exp_temp)]
-          # 
-          # fac_alt_paths <- ctrl_exp_temp[grepl(id, ctrl_exp_temp)]
-          # 
-          # ctrl_exp_temp <- unique(ctrl_exp_temp[!ctrl_exp_temp %in% c(target_rhss[pa], path_outs_disjuncts, dis, id)])
-          cand_other_disjs <- cand_disjuncts[!grepl(id, cand_disjuncts)]
-          if(length(cand_other_disjs) == 0L){
-            cand_other_disjs_supp <- ""
-          } else {
-            cand_other_disjs_supp <- paste0("!(", paste0(cand_other_disjs, collapse = "+"), ")*")
-          }
-          #test_fac_cofacs[!toupper(unlist(test_fac_cofacs)) %in% toupper(c(candidate_cofacs, on_path_cofacs))]
-          
-          # test_fac_cofacs <- lapply(test_fac_cofacs, function(x) x[!toupper(x) %in% toupper(c(candidate_cofacs, on_path_cofacs))])
-          # if(length(test_fac_cofacs) >= 1){test_fac_cofacs[which(unlist(lapply(test_fac_cofacs, function(x) length(x)<1)))] <- NULL}
-          # 
-          # 
-          #ca_cofac_pres <- paste0(paste0(unique(c(candidate_cofacs, on_path_cofacs, unlist(test_fac_cofacs))), collapse = "*"))
-          
-          #ca_cofac_pres <- paste0(paste0(unique(c(candidate_cofacs, on_path_cofacs, unlist(test_fac_cofacs))), collapse = "*"))
-          
-          #ca_cofac_pres <- paste0("*", paste0(unique(cofacs), collapse = "*"))
-          #ca_cofac_pres <- paste0(paste0(unique(cofacs), collapse = "*"))
-          
-          
-          #ca_cofac_supp <- paste0("*!(", paste0(unique(c(candidate_cofacs, on_path_cofacs)), collapse = "*"), ")")
-          #ca_cofac_supp <- paste0("*!(", paste0(unique(cofacs), collapse = "*"), ")")
-          # sup_cofac_temp <- lapply(test_fac_cofacs_supp_temp, function(x)
-          #   paste0("!(", paste0(x, collapse = "*"), ")"))
-          # 
-          #sup_candidate_cofac_temp <- if(length(candidate_cofacs)>=1){paste0("!(", paste0(candidate_cofacs, collapse = "*"), ")")}else{NULL}
-          
-          #ca_cofac_supp <- if(length(sup_cofac_temp)>=1){paste0(paste0(sup_candidate_cofac_temp, collapse = "*"), "*", sup_candidate_cofac_temp)}else{NULL}
-          
-          
-          #ca_cofac_supp <- paste0("!(", paste0(unique(cofacs), collapse = "*"), ")")
-          
-          
-          #ce_temp_cofacs <- paste0("!(", paste0(unique(c(ctrl_exp_temp, cand_other_disjs)), collapse = "+"), ")")
-          #ce_temp_cofacs_sup <- paste0(unique(c(ctrl_exp_temp, cofacs_neg, cand_other_disjs)), collapse = "+")
-          #ctrl_exp_temp <- paste0(ctrl_exp_temp,  collapse = "+")
-          #ctrl_exp_cofacs_present <- paste0("!(", ce_temp_cofacs, ")")
-          #ctrl_exp_cofacs_supp <- paste0("!(", ce_temp_cofacs_sup, ")")
-         
-          ##########################################
-          # ctrl_exp <- paste0(cand_other_disjs_supp, candidate_cofacs_pres)
-          # 
-          # ctrl_exp <- gsub("\\*$", "", ctrl_exp)
-          # 
-          # if(ctrl_exp == ""){
-          #   testdat <- fulldat
-          # } else{
-          #   testdat <- ct2df(selectCases(ctrl_exp, fulldat))  
+          # candidate_cofacs <- cofac_extract(id, dis)
+          # if(is.null(candidate_cofacs)){
+          #   candidate_cofacs_pres <- ""
+          # } else {
+          #   candidate_cofacs_pres <- paste0(candidate_cofacs, collapse = "*")
           # }
-          # 
+
+         
           if(all(names(fulldat) %in% canvary)){
             check_for_pairs <- list(testdat)
           } else {
