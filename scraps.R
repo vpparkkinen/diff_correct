@@ -83,3 +83,8 @@ pathfinder <- function(diss, outs, path){
 }
 
 chain_asfs <- lapply(chain_asfs, unique)
+
+m1 <- "(E*c + b*h*d + E*H*B <-> G)*(b*H + c*E*b <-> F)*(F*e + c*G*d <-> A)"
+m2 <- "E*c*d + e*c*G + e*b*H <-> A"
+
+
