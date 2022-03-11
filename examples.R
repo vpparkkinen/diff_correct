@@ -69,11 +69,8 @@ all(unlist(results))
 lapply(results, function(x) which(unlist(x) ==FALSE))
 
 
-#problem case
-m1 <- "(f*a*G*e+A*E*g*f+A*e*F<->C)*(f*c*g*A+G*e*c<->D)"
-m2 <- "f*c*g*A+G*e*c<->D"
 
-
+diff_correct(m1,m2)
 # script for testing for false negatives --->
 
 dats <- vector("list", length(targets)) 
@@ -117,8 +114,14 @@ diff_correct(m1,m2)
 
 m1 <- "(A*D+A*g<->B)*(a*g<->F)*(g*b*C+d*B<->E)"
 m2 <-  "g*b*C<->E"
+diff_correct(m1,m2)
+
 
 m1 <- "(E*C*F*D+c*f*d+C*f*e*D<->A)*(d*e*c+c*D*F<->B)"
 m2 <-  "E*c+F*e<->B"
 diff_correct(m1,m2)
+correct3(m2,m1)
 
+#problem case
+m1 <- "(f*a*G*e+A*E*g*f+A*e*F<->C)*(f*c*g*A+G*e*c<->D)"
+m2 <- "f*c*g*A+G*e*c<->D"
