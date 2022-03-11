@@ -233,6 +233,7 @@ diff_correct <- function(m1, m2){
         id_effects <- names(unlist(id_effects))
         id_effects <- id_effects[-which(id_effects == toupper(id))]
         
+        #cofacs <- toupper(cofac_extract(id, dis))
         cofacs <- cofac_extract(id, dis)
         
         
@@ -292,10 +293,13 @@ diff_correct <- function(m1, m2){
                               id_causes,
                               id_effects,
                               cofac_causes,
-                              cofac_effects,
-                              cofacs))
+                              cofac_effects))
+                              #toupper(cofacs)))
+          canvary <- unique(canvary)
+          cofacs_pres <- paste0(cofacs, collapse = "*")
           
-
+          testdat_id <- ct2df(selectCases(cofacs_pres, testdat))
+          
           # canvary <- unique(c(toupper(id),
           #                     toupper(target_rhss[pa]),
           #                     id_causes,
@@ -311,14 +315,14 @@ diff_correct <- function(m1, m2){
 
          
           if(all(names(fulldat) %in% canvary)){
-            check_for_pairs <- list(testdat)
+            check_for_pairs <- list(testdat_id)
           } else {
             # check_for_pairs <- split(testdat, 
             #                        testdat[setdiff(names(testdat), canvary)], 
             #                        drop = T)
             
-            check_for_pairs <- split(testdat, 
-                                   testdat[setdiff(names(fulldat), canvary)], 
+            check_for_pairs <- split(testdat_id, 
+                                   testdat_id[setdiff(names(fulldat), canvary)], 
                                    drop = T)
           }
           
